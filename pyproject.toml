@@ -1,0 +1,28 @@
+[project]
+name = "manimations"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "manim>=0.19.1",
+    "manim-voiceover[azure,gtts]>=0.3.7",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.0",
+    "ruff>=0.14.8",
+    "setuptools>=80.9.0",
+    "ty>=0.0.2",
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+disable_error_code = ["name-defined"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["manim"]
+
+[tool.ruff.lint]
+per-file-ignores = { "*.py" = ["F403", "F405"] }
