@@ -6,6 +6,9 @@ class PhysicsCar(VGroup):
         super().__init__(**kwargs)
         self.wheel_radius = wheel_radius
 
+        self.delta_x = 0
+        self.velocity = 0
+
         self.body = Rectangle(width=width, height=height, color=color, fill_opacity=0.5)
 
         def create_wheel():

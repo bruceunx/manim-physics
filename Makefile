@@ -3,4 +3,4 @@
 .DEFAULT_GOAL := dev
 
 dev:
-	PYTHONPATH=. uv run manim -ql example/math_video.py
+	PYTHONPATH=. uv run manim -pql example/car_pulley.py
