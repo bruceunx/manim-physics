@@ -6,13 +6,16 @@ from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.azure import AzureService
 
 
-class FullPhysicsDemoWithVoice(VoiceoverScene):
+class FullPhysicsDemoLightMood(VoiceoverScene):
     def construct(self):
-        # 1. Setup Voiceover Service
         service = AzureService(
-            voice="en-HK-SamNeural",
+            voice="en-US-GuyNeural",
+            style="cheerful",
         )
         self.set_speech_service(service)
+
+        # Soften the background for a lighter feel
+        self.camera.background_color = "#1e1e1e"  # type:ignore
 
         # 2. Define Object Parameters
         PLATFORM_LENGTH = 6.5
@@ -54,12 +57,12 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
         FLOOR_END = RIGHT * FLOOR_LENGTH + DOWN * FLOOR_Y
         WALL_POS = RIGHT * WALL_X + UP * WALL_Y
 
-        # 3. Create Objects
+        # 3. Create Objects (Using brighter/softer colors where appropriate)
         platform = PhysicsPlatform(
             length=PLATFORM_LENGTH,
             thickness=PLATFORM_THICKNESS,
             wall_height=PLATFORM_WALL_HEIGHT,
-            color=BLUE_C,
+            color=TEAL_C,  # Lighter blue
         )
         platform.move_to(PLATFORM_POS)
 
@@ -67,7 +70,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
             length=WALL_LENGTH,
             thickness=WALL_THICKNESS,
             wall_height=WALL_WALL_HEIGHT,
-            color=BLUE_C,
+            color=TEAL_C,
         )
         wall.rotate(-90 * DEGREES)
         wall.move_to(WALL_POS)
@@ -76,7 +79,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
             width=CAR_WIDTH,
             height=CAR_HEIGHT,
             wheel_radius=CAR_WHEEL_RADIUS,
-            color=YELLOW_E,
+            color=YELLOW,  # Bright Yellow
         )
         car.move_to(CAR_POS)
 
@@ -95,7 +98,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
             position=pulley_pos, mount_point=pulley_mount_point, radius=PULLEY_RADIUS
         )
 
-        mass = Square(side_length=MASS_SIZE, color=RED, fill_opacity=0.8)
+        mass = Square(side_length=MASS_SIZE, color=RED_C, fill_opacity=0.9)
         mass.move_to(RIGHT * MASS_X + DOWN * MASS_Y)
 
         # Ropes
@@ -104,6 +107,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
                 start=car_pulley.wheel.get_bottom(),
                 end=pulley.get_tangent_point(car_pulley.wheel.get_bottom()),
                 color=WHITE,
+                stroke_width=3,
             )
         )
 
@@ -112,6 +116,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
                 start=WALL_POS + LEFT * WALL_THICKNESS,
                 end=car_pulley.wheel.get_top(),
                 color=WHITE,
+                stroke_width=3,
             )
         )
 
@@ -120,18 +125,19 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
                 start=pulley.wheel.get_right(),
                 end=mass.get_top(),
                 color=WHITE,
+                stroke_width=3,
             )
         )
 
         # Labels
         mass_weight_label = always_redraw(
-            lambda: MathTex("mg", color=GREEN).next_to(mass, RIGHT, buff=0.3)
+            lambda: MathTex("mg", color=GREEN_B).next_to(mass, RIGHT, buff=0.3)
         )
 
         mass_velocity_tracker = ValueTracker(0)
         mass_velocity_label = always_redraw(
             lambda: MathTex(
-                f"v_m = {mass_velocity_tracker.get_value():.2f}", color=RED
+                f"v_m = {mass_velocity_tracker.get_value():.2f}", color=RED_C
             ).next_to(mass, LEFT, buff=0.5)
         )
 
@@ -170,10 +176,8 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
         mass_start_y = mass.get_y()
         mass.add_updater(lambda m: m.set_y(mass_start_y - master_tracker.get_value()))
 
-        # --- UPDATER FIX PART 1 ---
-        # We only update the tracker if the calculated velocity is significant (> 0.01).
-        # This prevents the label from dropping to 0 when the animation finishes
-        # but the scene is waiting for the voiceover to finish.
+        # --- UPDATER FOR ACCELERATION ---
+        # "Latches" the value so it doesn't drop to zero when the animation finishes
         def update_velocities_acceleration(dt):
             car_v = car.calculate_speed(dt)
             if car_v > 0.01:
@@ -188,9 +192,13 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
 
         # Introduction
         with self.voiceover(
-            text="Consider this mechanical system. We have a car connected to a hanging mass via a set of pulleys."
+            text="Hey there! Check out this neat little physics setup. We've got a yellow car hooked up to a hanging red block."
         ) as tracker:
-            self.play(Indicate(car), Indicate(mass), run_time=tracker.duration)
+            self.play(
+                Indicate(car, color=WHITE),
+                Indicate(mass, color=WHITE),
+                run_time=tracker.duration,
+            )
 
         # Misconception
         tension_arrow = Arrow(
@@ -204,7 +212,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
         )
 
         with self.voiceover(
-            text="A common mistake is to assume that the tension in the rope, T, is simply equal to the weight of the mass, m g."
+            text="Now, you might be tempted to say the tension in the rope is just the weight of the block. Simple, right?"
         ) as tracker:
             self.play(
                 Create(tension_arrow),
@@ -216,7 +224,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
         # Correction
         cross = Cross(misconception_eq, color=RED)
         with self.voiceover(
-            text="However, this is incorrect. That equation only holds true if the mass is stationary."
+            text="But not so fast! That's only true if everything is standing perfectly still."
         ) as tracker:
             self.play(Create(cross), run_time=tracker.duration)
 
@@ -227,13 +235,13 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
             .shift(DOWN * 1.5)
         )
         with self.voiceover(
-            text="Because the system accelerates downwards, we must use Newton's Second Law. Weight minus Tension equals mass times acceleration."
+            text="Since this thing is going to accelerate downwards, we need Newton's Second Law. Weight minus tension drives the acceleration."
         ) as tracker:
             self.play(Write(fbd_eq), run_time=tracker.duration)
 
         correct_eq = MathTex("T", "=", "m", "g", "-", "m", "a").move_to(fbd_eq)
         with self.voiceover(
-            text="Rearranging this, we see that the tension is actually the weight, minus the force required to accelerate the mass."
+            text="So actually, the tension is the weight *minus* the force needed to move the block. "
         ) as tracker:
             self.play(
                 TransformMatchingTex(fbd_eq, correct_eq), run_time=tracker.duration
@@ -246,7 +254,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
         )
 
         with self.voiceover(
-            text="Also, due to the pulley geometry, the mass accelerates twice as fast as the car. This further reduces the tension acting on the car."
+            text="Plus, thanks to how these pulleys are rigged up, the block zooms down twice as fast as the car moves left!"
         ) as tracker:
             self.play(
                 Write(acc_label_car), Write(acc_label_mass), run_time=tracker.duration
@@ -269,7 +277,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
         FALL_TIME = np.sqrt(2 * abs(distance_to_floor) / MASS_ACCELERATION)
 
         with self.voiceover(
-            text="Let's observe the actual motion. Notice the acceleration."
+            text="Alright, enough math. Let's see it in action! Three, two, one... drop!"
         ):
             self.play(
                 master_tracker.animate.set_value(distance_to_floor),
@@ -280,23 +288,22 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
         # --- TRANSITION LOGIC ---
 
         # 1. Remove the acceleration updater.
-        # Because we added the conditional check (>0.01), the label should still show
-        # the peak velocity (approx 2.5) even if the scene waited for voiceover.
         self.remove_updater(update_velocities_acceleration)
 
-        # 2. Freeze the mass.
+        # 2. Freeze the mass (it hit the floor).
         mass.clear_updaters()
         mass_weight_label.clear_updaters()
         mass_velocity_label.clear_updaters()
-        mass_velocity_tracker.set_value(0)  # Mass stops visually
+        mass_velocity_tracker.set_value(0)
 
-        # 3. Calculate accurate theoretical velocity to correct any minor drift
+        # 3. CRITICAL: Manually calculate the peak velocity at this exact moment.
+        # This ensures that even if there was a micro-pause, the label shows the max speed, not 0.
         mass_final_v = MASS_ACCELERATION * FALL_TIME
         final_velocity = mass_final_v * 0.5
         car_velocity_tracker.set_value(final_velocity)
 
         # 4. Add deceleration updater.
-        # This one doesn't need the >0 check because we want to see it go to 0.
+        # This standard updater is fine now because we *want* it to track the speed down to 0.
         def update_velocities_deceleration(dt):
             if dt > 0:
                 velocity = car.calculate_speed(dt)
@@ -310,7 +317,7 @@ class FullPhysicsDemoWithVoice(VoiceoverScene):
         decel_distance = final_velocity * DECEL_TIME - (DECEL_RATE * DECEL_TIME**2) / 2
 
         with self.voiceover(
-            text="Once the mass hits the floor, the tension drops to zero, and friction slows the car to a stop."
+            text="Boom! It hits the floor, tension is gone, and the car coasts to a smooth stop."
         ):
             self.play(
                 master_tracker.animate.set_value(distance_to_floor + decel_distance),
