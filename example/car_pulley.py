@@ -1,3 +1,7 @@
+"""
+Title: 90% of Physics Students Get This WRONG! 😱
+"""
+
 from manim import *
 from manim.utils.rate_functions import ease_in_quad
 
@@ -192,7 +196,7 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
 
         # Introduction
         with self.voiceover(
-            text="Hey there! Check out this neat little physics setup. We've got a yellow car hooked up to a hanging red block."
+            text="This is a classic physics problem for students. The tricky setup here with two pulleys makes it a little challenging to visualize"
         ) as tracker:
             self.play(
                 Indicate(car, color=WHITE),
@@ -202,17 +206,18 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
 
         # Misconception
         tension_arrow = Arrow(
-            start=mass.get_top(), end=mass.get_top() + UP, color=ORANGE, buff=0
+            start=mass.get_bottom(), end=mass.get_bottom() + DOWN, color=ORANGE, buff=0
         )
         tension_label = MathTex("T", color=ORANGE).next_to(tension_arrow, LEFT)
+
         misconception_eq = (
             MathTex("T", "=", "m", "g", color=ORANGE)
+            .scale(0.7)
             .next_to(mass, RIGHT, buff=1.5)
             .shift(UP)
         )
-
         with self.voiceover(
-            text="Now, you might be tempted to say the tension in the rope is just the weight of the block. Simple, right?"
+            text="It's very intuitive to think the tension in the rope is the same as the weight of the mass"
         ) as tracker:
             self.play(
                 Create(tension_arrow),
@@ -226,26 +231,28 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
         with self.voiceover(
             text="But not so fast! That's only true if everything is standing perfectly still."
         ) as tracker:
-            self.play(Create(cross), run_time=tracker.duration)
+            self.play(Create(cross), run_time=0.3)
 
         # Derivation
         fbd_eq = (
             MathTex("m", "g", "-", "T", "=", "m", "a")
+            .scale(0.7)
             .move_to(misconception_eq)
             .shift(DOWN * 1.5)
         )
-        with self.voiceover(
-            text="Since this thing is going to accelerate downwards, we need Newton's Second Law. Weight minus tension drives the acceleration."
-        ) as tracker:
-            self.play(Write(fbd_eq), run_time=tracker.duration)
 
-        correct_eq = MathTex("T", "=", "m", "g", "-", "m", "a").move_to(fbd_eq)
+        with self.voiceover(
+            text="Since the mass is going to accelerate downwards, part of the gravitational force will be used to accelerate it"
+        ) as tracker:
+            self.play(Write(fbd_eq), run_time=0.5)
+
+        correct_eq = (
+            MathTex("T", "=", "m", "g", "-", "m", "a").scale(0.7).move_to(fbd_eq)
+        )
         with self.voiceover(
             text="So actually, the tension is the weight *minus* the force needed to move the block. "
         ) as tracker:
-            self.play(
-                TransformMatchingTex(fbd_eq, correct_eq), run_time=tracker.duration
-            )
+            self.play(TransformMatchingTex(fbd_eq, correct_eq), run_time=0.5)
 
         # Constraint Explanation
         acc_label_car = MathTex("a_{car}").next_to(car, UP)
@@ -256,9 +263,7 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
         with self.voiceover(
             text="Plus, thanks to how these pulleys are rigged up, the block zooms down twice as fast as the car moves left!"
         ) as tracker:
-            self.play(
-                Write(acc_label_car), Write(acc_label_mass), run_time=tracker.duration
-            )
+            self.play(Write(acc_label_car), Write(acc_label_mass), run_time=0.5)
 
         # Cleanup
         self.play(
@@ -277,7 +282,7 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
         FALL_TIME = np.sqrt(2 * abs(distance_to_floor) / MASS_ACCELERATION)
 
         with self.voiceover(
-            text="Alright, enough math. Let's see it in action! Three, two, one... <bookmark mark='start_drop'/> drop!"
+            text="Alright, enough talk. Let's drop the mass. Three, two, one... drop! <bookmark mark='start_drop'/>"
         ) as tracker:
             self.wait_until_bookmark("start_drop")
             self.play(
