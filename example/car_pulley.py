@@ -277,8 +277,9 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
         FALL_TIME = np.sqrt(2 * abs(distance_to_floor) / MASS_ACCELERATION)
 
         with self.voiceover(
-            text="Alright, enough math. Let's see it in action! Three, two, one... drop!"
-        ):
+            text="Alright, enough math. Let's see it in action! Three, two, one... <bookmark mark='start_drop'/> drop!"
+        ) as tracker:
+            self.wait_until_bookmark("start_drop")
             self.play(
                 master_tracker.animate.set_value(distance_to_floor),
                 run_time=FALL_TIME,
