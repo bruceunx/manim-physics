@@ -141,14 +141,14 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
         mass_velocity_tracker = ValueTracker(0)
         mass_velocity_label = always_redraw(
             lambda: MathTex(
-                f"v_m = {mass_velocity_tracker.get_value():.2f}", color=RED_C
+                "v_{mass}", "=", f"{mass_velocity_tracker.get_value():.2f}", color=RED_C
             ).next_to(mass, LEFT, buff=0.5)
         )
 
         car_velocity_tracker = ValueTracker(0)
         car_velocity_label = always_redraw(
             lambda: MathTex(
-                f"v_c = {car_velocity_tracker.get_value():.2f}", color=YELLOW
+                "v_{car}", "=", f"{car_velocity_tracker.get_value():.2f}", color=YELLOW
             ).next_to(car, DOWN, buff=0.5)
         )
 
@@ -196,7 +196,7 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
 
         # Introduction
         with self.voiceover(
-            text="This is a classic physics problem for students. The tricky setup here with two pulleys makes it a little challenging to visualize"
+            text="This is a classic physics problem. The double-pulley geometry creates a constraint that is deceptive and surprisingly counterintuitive."
         ) as tracker:
             self.play(
                 Indicate(car, color=WHITE),
@@ -206,9 +206,14 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
 
         # Misconception
         tension_arrow = Arrow(
-            start=mass.get_bottom(), end=mass.get_bottom() + DOWN, color=ORANGE, buff=0
+            start=pulley.get_right(),
+            end=pulley.get_right() + DOWN,
+            color=ORANGE,
+            buff=0,
         )
-        tension_label = MathTex("T", color=ORANGE).next_to(tension_arrow, LEFT)
+        tension_label = MathTex("T", color=ORANGE).next_to(
+            tension_arrow, RIGHT * 0.5 + UP * 0.1
+        )
 
         misconception_eq = (
             MathTex("T", "=", "m", "g", color=ORANGE)
@@ -223,36 +228,42 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
                 Create(tension_arrow),
                 Write(tension_label),
                 Write(misconception_eq),
+                run_time=1,
+            )
+
+        box = SurroundingRectangle(misconception_eq, color=YELLOW, buff=0.1)
+
+        # Create text to the right of the box
+        condition_text = Tex(
+            r"Condition:\\Statics or in Uniform Motion", color=YELLOW, font_size=20
+        ).next_to(box, RIGHT)
+
+        with self.voiceover(
+            text="But not so fast, That's only true if everything is standing perfectly still or in uniform motion."
+        ) as tracker:
+            self.play(
+                Create(box),
+                FadeIn(condition_text, shift=LEFT),
                 run_time=tracker.duration,
             )
 
-        # Correction
-        cross = Cross(misconception_eq, color=RED)
-        with self.voiceover(
-            text="But not so fast! That's only true if everything is standing perfectly still."
-        ) as tracker:
-            self.play(Create(cross), run_time=0.3)
-
-        # Derivation
-        fbd_eq = (
-            MathTex("m", "g", "-", "T", "=", "m", "a")
-            .scale(0.7)
-            .move_to(misconception_eq)
-            .shift(DOWN * 1.5)
-        )
-
-        with self.voiceover(
-            text="Since the mass is going to accelerate downwards, part of the gravitational force will be used to accelerate it"
-        ) as tracker:
-            self.play(Write(fbd_eq), run_time=0.5)
-
         correct_eq = (
-            MathTex("T", "=", "m", "g", "-", "m", "a").scale(0.7).move_to(fbd_eq)
+            MathTex("T", "=", "m", "g", "-", "m", "a_{mass}", color=ORANGE)
+            .scale(0.7)
+            .next_to(mass, RIGHT, buff=1.5)
+            .shift(UP)
         )
+        correct_eq[4:].set_color(RED)
+
         with self.voiceover(
-            text="So actually, the tension is the weight *minus* the force needed to move the block. "
+            text="The tension in the rope is reduced instantly when the mass drops, that is amazing,"
         ) as tracker:
-            self.play(TransformMatchingTex(fbd_eq, correct_eq), run_time=0.5)
+            self.play(
+                FadeOut(box),
+                FadeOut(condition_text),
+                TransformMatchingTex(misconception_eq, correct_eq),
+                run_time=1,
+            )
 
         # Constraint Explanation
         acc_label_car = MathTex("a_{car}").next_to(car, UP)
@@ -261,15 +272,12 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
         )
 
         with self.voiceover(
-            text="Plus, thanks to how these pulleys are rigged up, the block zooms down twice as fast as the car moves left!"
+            text="Given the pulley setup, the mass downwards twice as fast as the car moves right."
         ) as tracker:
             self.play(Write(acc_label_car), Write(acc_label_mass), run_time=0.5)
 
         # Cleanup
         self.play(
-            FadeOut(misconception_eq),
-            FadeOut(cross),
-            FadeOut(correct_eq),
             FadeOut(tension_arrow),
             FadeOut(tension_label),
             FadeOut(acc_label_car),
@@ -282,7 +290,7 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
         FALL_TIME = np.sqrt(2 * abs(distance_to_floor) / MASS_ACCELERATION)
 
         with self.voiceover(
-            text="Alright, enough talk. Let's drop the mass. Three, two, one... drop! <bookmark mark='start_drop'/>"
+            text="Ok. Let's drop the mass. Three, two, one... drop! <bookmark mark='start_drop'/>"
         ) as tracker:
             self.wait_until_bookmark("start_drop")
             self.play(
@@ -300,20 +308,32 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
         mass.clear_updaters()
         mass_weight_label.clear_updaters()
         mass_velocity_label.clear_updaters()
+        car_velocity_tracker.clear_updaters()
+
         mass_velocity_tracker.set_value(0)
 
         # 3. CRITICAL: Manually calculate the peak velocity at this exact moment.
         # This ensures that even if there was a micro-pause, the label shows the max speed, not 0.
-        mass_final_v = MASS_ACCELERATION * FALL_TIME
-        final_velocity = mass_final_v * 0.5
-        car_velocity_tracker.set_value(final_velocity)
+        final_velocity = car_velocity_tracker.get_value()
+
+        car_velocity_tracker1 = ValueTracker(car_velocity_tracker.get_value())
+        car_velocity_label1 = always_redraw(
+            lambda: MathTex(
+                "v_{car}", "=", f"{car_velocity_tracker1.get_value():.2f}", color=RED
+            ).next_to(car_velocity_label, DOWN, buff=0.5)
+        )
+
+        print(f"{car_velocity_tracker.get_value() = }")
+        self.wait(1)
+
+        self.add(car_velocity_label1)
 
         # 4. Add deceleration updater.
         # This standard updater is fine now because we *want* it to track the speed down to 0.
         def update_velocities_deceleration(dt):
             if dt > 0:
                 velocity = car.calculate_speed(dt)
-                car_velocity_tracker.set_value(velocity)
+                car_velocity_tracker1.set_value(velocity)
 
         self.add_updater(update_velocities_deceleration)
 
@@ -332,6 +352,6 @@ class FullPhysicsDemoLightMood(VoiceoverScene):
             )
 
         # Final cleanup
-        car_velocity_tracker.set_value(0)
+        car_velocity_tracker1.set_value(0)
         self.remove_updater(update_velocities_deceleration)
         self.wait(2)
